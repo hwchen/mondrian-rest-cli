@@ -1,0 +1,159 @@
+///# Interface
+///
+///cubes
+///    - no arg: all cubes and dims info
+///    - arg: cube name: cube info
+///
+///test
+///    - no arg: all cubes
+///    - arg: cube name
+///
+///flush
+///    - arg/env var: key
+///
+///query
+///    - arg: cube name
+///    - option: drilldown
+///    - option: cut
+///    - option: measure
+///    - flags: parents, debug, etc
+///    - option: output (json, jsonrecord, csv)
+///    - option: debug (url, js)
+///
+///
+///global option/env var: base url
+///
+
+use std::env;
+use structopt::StructOpt;
+
+#[derive(StructOpt, Debug)]
+#[structopt(
+    name="Mondrian Rest Cli",
+    about="Cli interface for Mondrian Rest API",
+    after_help="NOTE:\n    \
+        Multi-arg options can be specified using either one\n    \
+        flag or several, the following are equivalent here:\n\n      \
+        -o arg1 arg2 arg3\n      \
+        -o arg1 -o arg2 -o arg3\n\n    \
+        This is especially useful when constructing queries
+        ",
+)]
+pub struct Config {
+    #[structopt(
+        short="b",
+        long="base_url",
+        help="Base url; this or env var MON_CLI_BASE_URL must be set",
+    )]
+    base_url: Option<String>,
+
+    #[structopt(
+        short="v",
+        help="Verbose flag",
+    )]
+    verbose: bool,
+
+    #[structopt(subcommand)]
+    cmd: Command,
+}
+
+#[derive(StructOpt, Debug)]
+pub enum Command {
+    #[structopt(
+        name="describe",
+        alias="d",
+        about="Gets information about cubes",
+    )]
+    Describe {
+        #[structopt(
+            help="Describe specified cube; empty arg will retrieve all cubes")
+        ]
+        cube_name: Option<String>,
+    },
+
+    #[structopt(
+        name="test",
+        alias="t",
+        about="Tests schema for errors",
+    )]
+    Test {
+        #[structopt(
+            help="Test specified cube; empty arg will test all cubes")
+        ]
+        cube_name: Option<String>,
+    },
+
+    #[structopt(
+        name="flush",
+        alias="f",
+        about="Asks mondrian server to flush schema and cache and reset",
+    )]
+    Flush {
+        #[structopt(
+            help="Secret; this or env var MON_CLI_SECRET must be set")
+        ]
+        secret: Option<String>,
+    },
+
+    #[structopt(
+        name="query",
+        alias="q",
+        about="Runs a query on a cube",
+    )]
+    Query {
+        #[structopt(
+            short="d",
+            long="drilldown",
+            help="Fully qualified name '.' delimited. Takes multiple.",
+        )]
+        drilldowns: Vec<String>,
+
+        #[structopt(
+            short="m",
+            long="measure",
+            help="Fully qualified name '.' delimited. Takes multiple.",
+        )]
+        measures: Vec<String>,
+
+        #[structopt(
+            short="c",
+            long="cut",
+            help="Fully qualified name '.' delimited. Takes multiple.",
+        )]
+        cuts: Vec<String>,
+    }
+}
+
+pub fn get_config() -> Config {
+    let mut config = Config::from_args();
+    // check base url presence
+    if config.base_url.is_none() {
+        if let Ok(base_url) = env::var("MON_CLI_BASE_URL") {
+            config.base_url = Some(base_url);
+        } else {
+            panic!();
+        }
+    }
+
+    // check secret presence
+    if let Command::Flush{ref mut secret, ..} = config.cmd {
+        if secret.is_none() {
+            if let Ok(s) = env::var("MON_CLI_SECRET") {
+                *secret = Some(s);
+            } else {
+                panic!();
+            }
+        }
+    }
+
+    // see if this error check can be pushed to structopt
+    // check that query has query has at least one drilldown
+    // and at least one measure
+    if let Command::Query{ref drilldowns, ref measures, ..} = config.cmd {
+        if drilldowns.is_empty() || measures.is_empty() {
+            panic!();
+        }
+    }
+
+    config
+}
