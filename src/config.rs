@@ -24,6 +24,7 @@
 ///global option/env var: base url
 ///
 
+use failure::Error;
 use std::env;
 use structopt::StructOpt;
 
@@ -124,14 +125,15 @@ pub enum Command {
     }
 }
 
-pub fn get_config() -> Config {
+pub fn get_config() -> Result<Config, Error> {
     let mut config = Config::from_args();
     // check base url presence
+    // TODO parse to url path?
     if config.base_url.is_none() {
         if let Ok(base_url) = env::var("MON_CLI_BASE_URL") {
             config.base_url = Some(base_url);
         } else {
-            panic!();
+            bail!("Base url must be supplied");
         }
     }
 
@@ -141,7 +143,7 @@ pub fn get_config() -> Config {
             if let Ok(s) = env::var("MON_CLI_SECRET") {
                 *secret = Some(s);
             } else {
-                panic!();
+                bail!("Secret must be supplied");
             }
         }
     }
@@ -151,9 +153,9 @@ pub fn get_config() -> Config {
     // and at least one measure
     if let Command::Query{ref drilldowns, ref measures, ..} = config.cmd {
         if drilldowns.is_empty() || measures.is_empty() {
-            panic!();
+            bail!("Dimension and measure must be supplied");
         }
     }
 
-    config
+    Ok(config)
 }

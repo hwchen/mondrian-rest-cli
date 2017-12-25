@@ -4,5 +4,6 @@ name = "mondrian-rest-cli"
 version = "0.1.0"
 
 [dependencies]
+failure = "0.1.1"
 structopt = "0.1.6"
 structopt-derive = "0.1.6"
