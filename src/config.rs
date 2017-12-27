@@ -41,21 +41,24 @@ use structopt::StructOpt;
         ",
 )]
 pub struct Config {
+    // TODO figure out how to not have this as Option,
+    // because it's actuall required in the end, but just
+    // not in the cli config
     #[structopt(
         short="b",
         long="base_url",
         help="Base url; this or env var MON_CLI_BASE_URL must be set",
     )]
-    base_url: Option<String>,
+    pub base_url: Option<String>,
 
     #[structopt(
         short="v",
         help="Verbose flag",
     )]
-    verbose: bool,
+    pub verbose: bool,
 
     #[structopt(subcommand)]
-    cmd: Command,
+    pub cmd: Command,
 }
 
 #[derive(StructOpt, Debug)]
@@ -96,6 +99,7 @@ pub enum Command {
         secret: Option<String>,
     },
 
+    // TODO add options, and flush before query
     #[structopt(
         name="query",
         alias="q",
