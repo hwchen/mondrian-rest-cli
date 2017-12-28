@@ -28,6 +28,11 @@ fn run() -> Result<(), Error> {
         .map_err(|err| {
             err.context("Mondrian Rest Cli")
         })?;
+    // TODO
+    // Generate mondrianbuilder here
+    // Then choose either exec or url in the last branch.
+    // Or should I only generate url from api, then use reqwest.
+    // How much deserializing should I do?
     let out = match config.cmd {
         Command::Describe {cube_name} => {
             let mut res = api::call(config.base_url.unwrap());

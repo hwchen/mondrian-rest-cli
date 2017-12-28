@@ -116,7 +116,7 @@ impl MondrianBuilder {
         if let Some(ref cube_name) = self.cube_name {
             let mut cube_name = cube_name.clone();
             add_trailing_slash(&mut cube_name);
-            url.join(&cube_name)?;
+            url = url.join(&cube_name)?;
         }
 
         Ok(url)
