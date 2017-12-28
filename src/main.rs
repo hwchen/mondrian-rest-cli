@@ -28,19 +28,26 @@ fn run() -> Result<(), Error> {
         .map_err(|err| {
             err.context("Mondrian Rest Cli")
         })?;
-    match config.cmd {
+    let out = match config.cmd {
         Command::Describe {cube_name} => {
-            println!("{}", api::describe(config.base_url.unwrap(), cube_name)?);
+            let mut res = api::call(config.base_url.unwrap());
+            if let Some(cube) = cube_name {
+                res.cube(cube);
+            }
+            println!("{}", res.url().unwrap());
+            res.exec()?
         },
         Command::Test {..} => {
-            ()
+            "".to_owned()
         },
         Command::Flush {..} => {
-            ()
+            "".to_owned()
         },
         Command::Query {..} => {
-            ()
+            "".to_owned()
         },
-    }
+    };
+
+    println!("{}", out);
     Ok(())
 }

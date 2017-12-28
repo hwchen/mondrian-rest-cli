@@ -1,7 +1,7 @@
 /// Interface to mondrian rest api
 
 use failure::Error;
-use reqwest;
+use reqwest::{self, Url};
 use std::io::Read;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -16,6 +16,7 @@ pub struct MondrianBuilder {
     parents: bool,
     nonempty: bool,
     distinct: bool,
+    format: ResponseFormat,
 }
 
 impl Default for MondrianBuilder {
@@ -31,6 +32,7 @@ impl Default for MondrianBuilder {
             parents: false,
             nonempty: false,
             distinct: false,
+            format: ResponseFormat::Json,
         }
     }
 }
@@ -93,13 +95,39 @@ impl MondrianBuilder {
     /// Execute the call and return
     /// the body as unparsed string
     pub fn exec(&self) -> Result<String, Error> {
-        Ok("".to_owned())
+        let url = self.url()?;
+        let mut resp = reqwest::get(url)?;
+
+        // TODO return a good error
+        ensure!(resp.status().is_success(), "error");
+
+        Ok(resp.text()?)
     }
 
     /// The other finalizer
     /// return the url
-    pub fn url(&self) -> String {
-        "".to_owned()
+    pub fn url(&self) -> Result<Url, Error> {
+        let mut base_url = self.base_url.clone();
+        add_trailing_slash(&mut base_url);
+
+        let mut url = Url::parse(&self.base_url)?;
+        url = url.join("cubes/")?;
+
+        if let Some(ref cube_name) = self.cube_name {
+            let mut cube_name = cube_name.clone();
+            add_trailing_slash(&mut cube_name);
+            url.join(&cube_name)?;
+        }
+
+        Ok(url)
+    }
+}
+
+fn add_trailing_slash(s: &mut String) {
+    if let Some(last_char) = s.chars().last() {
+        if last_char != '/' {
+            s.push('/');
+        }
     }
 }
 
@@ -129,6 +157,13 @@ pub struct Property {
     property: String,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum ResponseFormat {
+    Json,
+    JsonRecords,
+    Csv,
+}
+
 /// Initializer for the builder pattern
 pub fn call(base_url: String) -> MondrianBuilder {
     let mut builder = MondrianBuilder::default();
@@ -149,3 +184,19 @@ pub fn describe(base_url: String, cube_name: Option<String>) -> Result<String, E
     Ok(resp.text()?)
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_add_trailing_slash() {
+        let mut test = "test".to_owned();
+        let mut test1 = "test1/".to_owned();
+
+        add_trailing_slash(&mut test);
+        add_trailing_slash(&mut test1);
+
+        assert_eq!(test, "test/".to_owned());
+        assert_eq!(test1, "test1/".to_owned());
+    }
+}
