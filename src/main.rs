@@ -53,7 +53,7 @@ fn run() -> Result<(), Error> {
             "".to_owned()
         },
         Command::Flush {secret} => {
-            api::flush(config.base_url.unwrap(), &secret.unwrap())?;
+            api::flush(config.base_url.unwrap(), secret.unwrap())?;
             "Flush complete".to_owned()
         },
         Command::Query {..} => {

@@ -1,8 +1,12 @@
 /// Interface to mondrian rest api
 
+mod names;
+
 use failure::Error;
 use reqwest::{self, Url};
 use std::io::Read;
+
+pub use self::names::{Drilldown, Measure, Cut, Property};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct QueryBuilder {
@@ -124,55 +128,6 @@ impl QueryBuilder {
 
 }
 
-fn add_trailing_slash(s: &mut String) {
-    if let Some(last_char) = s.chars().last() {
-        if last_char != '/' {
-            s.push('/');
-        }
-    }
-}
-
-// Structs for creating fully qualified names
-// for query parameters
-//
-// Implement display for all of them so that they
-// can be formatted to a string for joining to
-// a url.
-//
-// Implement FromStr to be able to easily parse
-// a small variety of names.
-// - [Dimension].[Hierarchy].[Level]
-// - Dimension.Hierarchy.Level
-// - Dimension.Level
-// etc.
-// TODO start here tomorrow
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Drilldown {
-    dimension: String,
-    hierarchy: String,
-    level: String,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Measure(String);
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Cut {
-    dimension: String,
-    hierarchy: String,
-    level: String,
-    members: Vec<String>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Property {
-    dimension: String,
-    hierarchy: String,
-    level: String,
-    property: String,
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum ResponseFormat {
     Json,
@@ -188,14 +143,14 @@ pub fn query(base_url: String) -> QueryBuilder {
 }
 
 /// Other other finalizer for builder pattern
-pub fn flush<S: Into<String>>(base_url: S, secret: &str) -> Result<(), Error> {
+pub fn flush<S: Into<String>>(base_url: S, secret: S) -> Result<(), Error> {
     let mut base_url = base_url.into().clone();
     add_trailing_slash(&mut base_url);
 
     let mut url = Url::parse(&base_url)?;
     url = url.join("flush/")?;
 
-    url.query_pairs_mut().append_pair("secret", secret);
+    url.query_pairs_mut().append_pair("secret", &secret.into());
     println!("{}", url.as_str());
 
     let mut resp = reqwest::get(url)?;
@@ -218,6 +173,16 @@ pub fn describe(base_url: String, cube_name: Option<String>) -> Result<String, E
 
     Ok(resp.text()?)
 }
+
+// util fn
+fn add_trailing_slash(s: &mut String) {
+    if let Some(last_char) = s.chars().last() {
+        if last_char != '/' {
+            s.push('/');
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod test {
