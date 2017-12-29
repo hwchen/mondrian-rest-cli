@@ -132,6 +132,21 @@ fn add_trailing_slash(s: &mut String) {
     }
 }
 
+// Structs for creating fully qualified names
+// for query parameters
+//
+// Implement display for all of them so that they
+// can be formatted to a string for joining to
+// a url.
+//
+// Implement FromStr to be able to easily parse
+// a small variety of names.
+// - [Dimension].[Hierarchy].[Level]
+// - Dimension.Hierarchy.Level
+// - Dimension.Level
+// etc.
+// TODO start here tomorrow
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Drilldown {
     dimension: String,
