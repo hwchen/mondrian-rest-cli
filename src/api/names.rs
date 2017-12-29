@@ -21,6 +21,7 @@
 
 use failure::Error;
 use std::fmt;
+use std::str::FromStr;
 
 /// Fully qualified name of Dimension, Hierarchy, and Level
 /// Basis for other names.
@@ -70,6 +71,31 @@ impl fmt::Display for LevelName {
     }
 }
 
+impl FromStr for LevelName {
+    type Err = Error;
+
+    /// NAIVE IMPL, does not deal with escaped brackets,
+    /// unpaired brackets, etc. Just checks whether the
+    /// first char is a bracket to determine whether to
+    /// parse using brackets or not.
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let name_iter = if s.chars().nth(0).unwrap() == '[' {
+            // check if starts with '[', then assume
+            // that this means that it's a qualified name
+            // with [] wrappers. This means that can't just
+            // split on any periods, only periods that fall
+            // outside the []
+            let pattern: &[_] = &['[', ']'];
+            let s = s.trim_matches(pattern);
+            s.split("].[")
+        } else {
+            s.split(".")
+        };
+
+        LevelName::from_vec(name_iter.collect())
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Drilldown(LevelName);
 
@@ -93,6 +119,16 @@ impl fmt::Display for Drilldown {
     }
 }
 
+impl FromStr for Drilldown {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse::<LevelName>().map(|level_name| Drilldown(level_name))
+    }
+}
+
+/// Naive impl, does not check that [Measure]. is NOT
+/// prepended. But does remove brackets on FromStr
 #[derive(Debug, Clone, PartialEq)]
 pub struct Measure(String);
 
@@ -108,6 +144,19 @@ impl fmt::Display for Measure{
     }
 }
 
+impl FromStr for Measure {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let pattern: &[_] = &['[', ']'];
+        let s = s.trim_matches(pattern);
+        Ok(Measure(s.to_owned()))
+    }
+}
+
+/// Note: FromStr impl aggressively left trims ampersands
+/// from the beginning of member list and from the
+/// beginning of each member
 // TODO change cut and property to LevelName
 #[derive(Debug, Clone, PartialEq)]
 pub struct Cut {
@@ -180,6 +229,49 @@ impl fmt::Display for Cut {
     }
 }
 
+// TODO I should use a parser for this, just splitting is kind of
+// a pain
+impl FromStr for Cut {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let name_vec: Vec<_> = (if s.chars().nth(0).unwrap() == '[' {
+            // check if starts with '[', then assume
+            // that this means that it's a qualified name
+            // with [] wrappers. This means that can't just
+            // split on any periods, only periods that fall
+            // outside the []
+            let pattern: &[_] = &['[', ']'];
+
+            // TODO maybe this should be split into
+            // left and right trims
+            //
+            // This is to deal with case where
+            // & is inserted before member, which
+            // "].[" won't match
+            let s = s.trim_matches(pattern);
+            s.split("].")
+                .map(|s| s.trim_left_matches('['))
+                .collect()
+        } else {
+            s.split(".")
+                .collect()
+        });
+
+        let members: Vec<_> = name_vec[name_vec.len()-1]
+            .trim_left_matches('&')
+            .trim_left_matches('[')
+            .split(',')
+            .map(|s| s.trim_left_matches('&').to_owned())
+            .collect();
+
+        Ok(Cut {
+            level_name: LevelName::from_vec(name_vec[0..name_vec.len()-1].to_vec())?,
+            members: members,
+        })
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Property {
     level_name: LevelName,
@@ -222,6 +314,34 @@ impl Property {
 impl fmt::Display for Property {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}.[{}]", self.level_name, self.property)
+    }
+}
+
+impl FromStr for Property {
+    type Err = Error;
+
+    /// NAIVE IMPL, does not deal with escaped brackets,
+    /// unpaired brackets, etc. Just checks whether the
+    /// first char is a bracket to determine whether to
+    /// parse using brackets or not.
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let name_vec: Vec<_> = (if s.chars().nth(0).unwrap() == '[' {
+            // check if starts with '[', then assume
+            // that this means that it's a qualified name
+            // with [] wrappers. This means that can't just
+            // split on any periods, only periods that fall
+            // outside the []
+            let pattern: &[_] = &['[', ']'];
+            let s = s.trim_matches(pattern);
+            s.split("].[")
+        } else {
+            s.split(".")
+        }).collect();
+
+        Ok(Property {
+            level_name: LevelName::from_vec(name_vec[0..name_vec.len()-1].to_vec())?,
+            property: name_vec[name_vec.len()-1].to_owned(),
+        })
     }
 }
 
@@ -297,5 +417,61 @@ mod test {
         println!("{}", property);
 
         panic!();
+    }
+
+    #[test]
+    fn test_parse() {
+        // Currently supported syntaxes. No guarantees for more complex cases
+
+        let level = LevelName::new("Geography", "Geography", "County");
+        let drilldown = Drilldown::new("Geography", "Geography", "County");
+        let cut1 = Cut::new("Geography", "Geography", "County", vec!["1"]);
+        let cut2 = Cut::new("Geography", "Geography", "County", vec!["1", "2"]);
+        let property = Property::new("Geography", "Geography", "County", "name_en");
+
+        // test level_name
+        let level_test_1 = "Geography.Geography.County".parse::<LevelName>().unwrap();
+        let level_test_2 = "[Geography].[Geography].[County]".parse::<LevelName>().unwrap();
+        let level_test_3 = "Geography.County".parse::<LevelName>().unwrap();
+
+        assert_eq!(level, level_test_1);
+        assert_eq!(level, level_test_2);
+        assert_eq!(level, level_test_3);
+
+        // test_drilldown
+        let drilldown_test_1 = "Geography.Geography.County".parse::<Drilldown>().unwrap();
+        let drilldown_test_2 = "[Geography].[Geography].[County]".parse::<Drilldown>().unwrap();
+        let drilldown_test_3 = "Geography.County".parse::<Drilldown>().unwrap();
+
+        assert_eq!(drilldown, drilldown_test_1);
+        assert_eq!(drilldown, drilldown_test_2);
+        assert_eq!(drilldown, drilldown_test_3);
+
+        // test cut1
+        let cut1_test_1 = "Geography.Geography.County.1".parse::<Cut>().unwrap();
+        let cut1_test_2 = "[Geography].[Geography].[County].&[1]".parse::<Cut>().unwrap();
+        let cut1_test_3 = "Geography.County.1".parse::<Cut>().unwrap();
+
+        assert_eq!(cut1, cut1_test_1);
+        assert_eq!(cut1, cut1_test_2);
+        assert_eq!(cut1, cut1_test_3);
+
+        // test cut2
+        let cut2_test_1 = "Geography.Geography.County.1,2".parse::<Cut>().unwrap();
+        let cut2_test_2 = "[Geography].[Geography].[County].&[1,2]".parse::<Cut>().unwrap();
+        let cut2_test_3 = "Geography.County.1,2".parse::<Cut>().unwrap();
+
+        assert_eq!(cut2, cut2_test_1);
+        assert_eq!(cut2, cut2_test_2);
+        assert_eq!(cut2, cut2_test_3);
+
+        // test property
+        let property_test_1 = "Geography.Geography.County.name_en".parse::<Property>().unwrap();
+        let property_test_2 = "[Geography].[Geography].[County].[name_en]".parse::<Property>().unwrap();
+        let property_test_3 = "Geography.County.name_en".parse::<Property>().unwrap();
+
+        assert_eq!(property, property_test_1);
+        assert_eq!(property, property_test_2);
+        assert_eq!(property, property_test_3);
     }
 }

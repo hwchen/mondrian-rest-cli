@@ -1,9 +1,12 @@
 // Worklist:
-// - implement display and FromStr for qualified names
+// x implement display and FromStr for qualified names
 // - implement full url builder for querybuilder (including output formats)
 // - implement serde json to allow for parsing of cube descriptions for testing
 // - implement testing (flush, describe, query all dims of a cube)
 // - implement better error reporting (runtime Java error, and NaN for json, etc.)
+//
+// Future:
+// - use parser for Cut
 
 #[macro_use]
 extern crate failure;
