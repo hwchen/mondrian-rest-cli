@@ -4,7 +4,6 @@ mod names;
 
 use failure::Error;
 use reqwest::{self, Url};
-use std::io::Read;
 
 pub use self::names::{Drilldown, Measure, Cut, Property};
 
