@@ -35,7 +35,7 @@ fn run() -> Result<(), Error> {
     // How much deserializing should I do?
     let out = match config.cmd {
         Command::Describe {cube_name} => {
-            let mut res = api::call(config.base_url.unwrap());
+            let mut res = api::query(config.base_url.unwrap());
             if let Some(cube) = cube_name {
                 res.cube(cube);
             }
@@ -45,8 +45,9 @@ fn run() -> Result<(), Error> {
         Command::Test {..} => {
             "".to_owned()
         },
-        Command::Flush {..} => {
-            "".to_owned()
+        Command::Flush {secret} => {
+            api::flush(config.base_url.unwrap(), &secret.unwrap())?;
+            "Flush complete".to_owned()
         },
         Command::Query {..} => {
             "".to_owned()

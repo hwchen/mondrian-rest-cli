@@ -5,7 +5,7 @@ use reqwest::{self, Url};
 use std::io::Read;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct MondrianBuilder {
+pub struct QueryBuilder {
     base_url: String,
     cube_name: Option<String>,
     drilldowns: Vec<Drilldown>,
@@ -19,9 +19,9 @@ pub struct MondrianBuilder {
     format: ResponseFormat,
 }
 
-impl Default for MondrianBuilder {
+impl Default for QueryBuilder {
     fn default () -> Self {
-        MondrianBuilder {
+        QueryBuilder {
             base_url: "".to_owned(),
             cube_name: None,
             drilldowns: Vec::new(),
@@ -38,7 +38,7 @@ impl Default for MondrianBuilder {
 }
 
 /// Builder pattern
-impl MondrianBuilder {
+impl QueryBuilder {
     pub fn cube<S: Into<String>>(&mut self, cube_name: S) {
         self.cube_name = Some(cube_name.into());
     }
@@ -121,6 +121,7 @@ impl MondrianBuilder {
 
         Ok(url)
     }
+
 }
 
 fn add_trailing_slash(s: &mut String) {
@@ -165,10 +166,29 @@ pub enum ResponseFormat {
 }
 
 /// Initializer for the builder pattern
-pub fn call(base_url: String) -> MondrianBuilder {
-    let mut builder = MondrianBuilder::default();
+pub fn query(base_url: String) -> QueryBuilder {
+    let mut builder = QueryBuilder::default();
     builder.base_url = base_url;
     builder
+}
+
+/// Other other finalizer for builder pattern
+pub fn flush<S: Into<String>>(base_url: S, secret: &str) -> Result<(), Error> {
+    let mut base_url = base_url.into().clone();
+    add_trailing_slash(&mut base_url);
+
+    let mut url = Url::parse(&base_url)?;
+    url = url.join("flush/")?;
+
+    url.query_pairs_mut().append_pair("secret", secret);
+    println!("{}", url.as_str());
+
+    let mut resp = reqwest::get(url)?;
+
+    // TODO return a good error
+    ensure!(resp.status().is_success(), "error");
+
+    Ok(())
 }
 
 pub fn describe(base_url: String, cube_name: Option<String>) -> Result<String, Error> {
