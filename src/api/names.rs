@@ -16,10 +16,11 @@
 // a small variety of names.
 // - [Dimension].[Hierarchy].[Level]
 // - Dimension.Hierarchy.Level
-// - Dimension.Level 
+// - Dimension.Level
 // etc.
 
 use failure::Error;
+use std::fmt;
 
 /// Fully qualified name of Dimension, Hierarchy, and Level
 /// Basis for other names.
@@ -63,6 +64,12 @@ impl LevelName {
     }
 }
 
+impl fmt::Display for LevelName {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[{}].[{}].[{}]", self.dimension, self.hierarchy, self.level)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Drilldown(LevelName);
 
@@ -80,6 +87,12 @@ impl Drilldown {
     }
 }
 
+impl fmt::Display for Drilldown {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[{}].[{}].[{}]", self.0.dimension, self.0.hierarchy, self.0.level)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Measure(String);
 
@@ -89,10 +102,16 @@ impl Measure {
     }
 }
 
+impl fmt::Display for Measure{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 // TODO change cut and property to LevelName
 #[derive(Debug, Clone, PartialEq)]
 pub struct Cut {
-    level: LevelName,
+    level_name: LevelName,
     members: Vec<String>,
 }
 
@@ -105,7 +124,7 @@ impl Cut {
         ) -> Self
     {
         Cut {
-            level: LevelName::new(dimension, hierarchy, level),
+            level_name: LevelName::new(dimension, hierarchy, level),
             members: members.into_iter().map(|s| s.into()).collect(),
         }
     }
@@ -113,11 +132,13 @@ impl Cut {
     /// Names must have already been trimmed of [] delimiters.
     pub fn from_vec<S: Into<String> + Clone>(cut_level: Vec<S>, members: Vec<S>) -> Result<Self, Error> 
     {
+        ensure!(members.len() > 0, "No members found");
+
         // TODO get rid of clones
         Ok(LevelName::from_vec(cut_level.clone())
             .map(|level_name| {
                 Cut {
-                    level: level_name,
+                    level_name: level_name,
                     members: members.clone().into_iter().map(|s| s.into()).collect(),
                 }
             })
@@ -128,6 +149,34 @@ impl Cut {
                     members.into_iter().map(|s| s.into()).collect::<Vec<String>>(),
                 ))
             })?)
+    }
+}
+
+impl fmt::Display for Cut {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // members must be more than 0, checked by assert on serialization
+        if self.members.len() == 1 {
+            write!(f, "{}.&[{}]", self.level_name, self.members[0])
+        } else {
+            let mut out = String::new();
+            out.push('{');
+
+            let mut members = self.members.iter();
+            out.push_str(
+                format!(
+                    "{}.&[{}]",
+                    self.level_name, members.next().unwrap()
+                ).as_str()
+            );
+
+            for member in members {
+                out.push_str(",");
+                out.push_str(format!("{}.&[{}]", self.level_name, member).as_str());
+            }
+            out.push('}');
+
+            write!(f, "{}", out)
+        }
     }
 }
 
@@ -170,18 +219,24 @@ impl Property {
     }
 }
 
+impl fmt::Display for Property {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}.[{}]", self.level_name, self.property)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
     fn test_level_name() {
-        let drilldown = LevelName::new("Geography", "Geography", "County");
-        let drill_from_vec_1 = LevelName::from_vec(vec!["Geography", "Geography", "County"]).unwrap();
-        let drill_from_vec_2 = LevelName::from_vec(vec!["Geography", "County"]).unwrap();
+        let level = LevelName::new("Geography", "Geography", "County");
+        let level_from_vec_1 = LevelName::from_vec(vec!["Geography", "Geography", "County"]).unwrap();
+        let level_from_vec_2 = LevelName::from_vec(vec!["Geography", "County"]).unwrap();
 
-        assert_eq!(drilldown, drill_from_vec_1);
-        assert_eq!(drilldown, drill_from_vec_2);
+        assert_eq!(level, level_from_vec_1);
+        assert_eq!(level, level_from_vec_2);
     }
 
     #[test]
@@ -224,5 +279,23 @@ mod test {
             ).unwrap();
 
         assert_eq!(property, property_from_vec);
+    }
+
+    #[test]
+    #[ignore]
+    fn test_display() {
+        let level = LevelName::new("Geography", "Geography", "County");
+        let drilldown = Drilldown::new("Geography", "Geography", "County");
+        let cut1 = Cut::new("Geography", "Geography", "County", vec!["1"]);
+        let cut2 = Cut::new("Geography", "Geography", "County", vec!["1", "2"]);
+        let property = Property::new("Geography", "Geography", "County", "name_en");
+
+        println!("{}", level);
+        println!("{}", drilldown);
+        println!("{}", cut1);
+        println!("{}", cut2);
+        println!("{}", property);
+
+        panic!();
     }
 }
