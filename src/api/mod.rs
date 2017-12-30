@@ -42,56 +42,69 @@ impl Default for QueryBuilder {
 
 /// Builder pattern
 impl QueryBuilder {
-    pub fn cube<S: Into<String>>(&mut self, cube_name: S) {
+    pub fn cube<S: Into<String>>(&mut self, cube_name: S) -> &mut Self {
         self.cube_name = Some(cube_name.into());
+        self
     }
 
-    pub fn drilldown(&mut self, drilldown: Drilldown) {
+    pub fn drilldown(&mut self, drilldown: Drilldown) -> &mut Self {
         self.drilldowns.push(drilldown);
+        self
     }
 
-    pub fn drilldowns(&mut self, drilldowns: Vec<Drilldown>) {
+    pub fn drilldowns(&mut self, drilldowns: Vec<Drilldown>) -> &mut Self {
         self.drilldowns.extend_from_slice(&drilldowns);
+        self
     }
 
-    pub fn measure(&mut self, measure: Measure) {
+    pub fn measure(&mut self, measure: Measure) -> &mut Self {
         self.measures.push(measure);
+        self
     }
 
-    pub fn measures(&mut self, measures: Vec<Measure>) {
+    pub fn measures(&mut self, measures: Vec<Measure>) -> &mut Self {
         self.measures.extend_from_slice(&measures);
+        self
     }
 
-    pub fn cut(&mut self, cut: Cut) {
+    pub fn cut(&mut self, cut: Cut) -> &mut Self {
         self.cuts.push(cut);
+        self
     }
 
-    pub fn cuts(&mut self, cuts: Vec<Cut>) {
+    pub fn cuts(&mut self, cuts: Vec<Cut>) -> &mut Self {
         self.cuts.extend_from_slice(&cuts);
+        self
     }
 
-    pub fn property(&mut self, property: Property) {
+    pub fn property(&mut self, property: Property) -> &mut Self {
         self.properties.push(property);
+        self
     }
 
-    pub fn properties(&mut self, properties: Vec<Property>) {
+    pub fn properties(&mut self, properties: Vec<Property>) -> &mut Self {
         self.properties.extend_from_slice(&properties);
+        self
     }
 
-    pub fn debug(&mut self, debug: bool) {
+    pub fn debug(&mut self, debug: bool) -> &mut Self {
         self.debug = debug;
+        self
     }
 
-    pub fn parents(&mut self, parents: bool) {
+    pub fn parents(&mut self, parents: bool) -> &mut Self {
         self.parents = parents;
+        self
     }
 
-    pub fn nonempty(&mut self, nonempty: bool) {
+    pub fn nonempty(&mut self, nonempty: bool) -> &mut Self {
         self.nonempty = nonempty;
+        self
     }
 
-    pub fn distinct(&mut self, distinct: bool) {
+    pub fn distinct(&mut self, distinct: bool) -> &mut Self {
         self.distinct = distinct;
+        self
     }
 
     /// One finalizer for builder pattern
