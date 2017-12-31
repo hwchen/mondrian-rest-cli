@@ -126,6 +126,13 @@ pub enum Command {
             help="Fully qualified name '.' delimited. Takes multiple.",
         )]
         cuts: Vec<String>,
+
+        #[structopt(
+            short="p",
+            long="property",
+            help="Fully qualified name '.' delimited. Takes multiple.",
+        )]
+        properties: Vec<String>,
     }
 }
 
