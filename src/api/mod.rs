@@ -4,6 +4,8 @@ mod names;
 
 use failure::Error;
 use reqwest::{self, Url};
+use std::fmt;
+use std::str::FromStr;
 
 pub use self::names::{Drilldown, Measure, Cut, Property};
 
@@ -107,6 +109,11 @@ impl QueryBuilder {
         self
     }
 
+    pub fn format(&mut self, format: ResponseFormat) -> &mut Self {
+        self.format = format;
+        self
+    }
+
     /// One finalizer for builder pattern
     /// Execute the call and return
     /// the body as unparsed string
@@ -133,6 +140,55 @@ impl QueryBuilder {
             let mut cube_name = cube_name.clone();
             add_trailing_slash(&mut cube_name);
             url = url.join(&cube_name)?;
+
+            // At this point, only add aggregate etc if
+            // there is drilldown and measure. Otherwise
+            // pass through (it's just asking for a description
+            // of one cube)
+            if !self.drilldowns.is_empty() && !self.measures.is_empty() {
+                url = url.join(
+                    format!("aggregate.{}", self.format).as_str()
+                )?;
+
+                // add all query parameters
+
+                for drilldown in &self.drilldowns {
+                    url.query_pairs_mut()
+                        .append_pair("drilldown[]", &drilldown.to_string());
+                }
+                for measure in &self.measures {
+                    url.query_pairs_mut()
+                        .append_pair("measure[]", &measure.to_string());
+                }
+                for cut in &self.cuts {
+                    url.query_pairs_mut()
+                        .append_pair("cut[]", &cut.to_string());
+                }
+                for property in &self.properties {
+                    url.query_pairs_mut()
+                        .append_pair("property[]", &property.to_string());
+                }
+
+                url.query_pairs_mut()
+                    .append_pair("debug", &self.debug.to_string());
+                url.query_pairs_mut()
+                    .append_pair("parents", &self.parents.to_string());
+                url.query_pairs_mut()
+                    .append_pair("nonempty", &self.nonempty.to_string());
+                url.query_pairs_mut()
+                    .append_pair("distinct", &self.distinct.to_string());
+            }
+        } else {
+            // if there is no cube name and there's a query, return
+            // error. Otherwise, just pass (just asking for
+            // a description of all cubes)
+            if !self.drilldowns.is_empty() ||
+                !self.measures.is_empty() ||
+                !self.cuts.is_empty() ||
+                !self.properties.is_empty()
+            {
+                bail!("Cube name is required for query");
+            }
         }
 
         Ok(url)
@@ -145,6 +201,31 @@ pub enum ResponseFormat {
     Json,
     JsonRecords,
     Csv,
+}
+
+impl FromStr for ResponseFormat {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use self::ResponseFormat::*;
+        match s {
+            "json" => Ok(Json),
+            "jsonrecords" => Ok(JsonRecords),
+            "csv" => Ok(Csv),
+            _ => Err(format_err!("{:?} is not a valid response format", s))
+        }
+    }
+}
+
+impl fmt::Display for ResponseFormat {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::ResponseFormat::*;
+        match *self {
+            Json => write!(f, "json"),
+            JsonRecords => write!(f, "jsonrecords"),
+            Csv => write!(f, "csv"),
+        }
+    }
 }
 
 /// Initializer for the builder pattern

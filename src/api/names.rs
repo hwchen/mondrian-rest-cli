@@ -235,7 +235,7 @@ impl FromStr for Cut {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let name_vec: Vec<_> = (if s.chars().nth(0).unwrap() == '[' {
+        let name_vec: Vec<_> = if s.chars().nth(0).unwrap() == '[' {
             // check if starts with '[', then assume
             // that this means that it's a qualified name
             // with [] wrappers. This means that can't just
@@ -256,7 +256,7 @@ impl FromStr for Cut {
         } else {
             s.split(".")
                 .collect()
-        });
+        };
 
         let members: Vec<_> = name_vec[name_vec.len()-1]
             .trim_left_matches('&')

@@ -18,9 +18,6 @@ extern crate structopt_derive;
 mod api;
 mod config;
 
-use api::{
-    describe,
-};
 use config::Command;
 use failure::Error;
 
@@ -59,8 +56,46 @@ fn run() -> Result<(), Error> {
             api::flush(config.base_url.unwrap(), secret.unwrap())?;
             "Flush complete".to_owned()
         },
-        Command::Query {..} => {
-            "".to_owned()
+        Command::Query {
+            cube_name,
+            drilldowns,
+            measures,
+            cuts,
+            properties,
+            debug,
+            parents,
+            nonempty,
+            distinct,
+            format,
+            } =>
+        {
+            let drilldowns = drilldowns.iter()
+                .map(|s| s.parse())
+                .collect::<Result<Vec<_>, Error>>()?;
+            let measures = measures.iter()
+                .map(|s| s.parse())
+                .collect::<Result<Vec<_>, Error>>()?;
+            let cuts = cuts.iter()
+                .map(|s| s.parse())
+                .collect::<Result<Vec<_>, Error>>()?;
+            let properties = properties.iter()
+                .map(|s| s.parse())
+                .collect::<Result<Vec<_>, Error>>()?;
+
+            let mut res = api::query(config.base_url.unwrap());
+            res.cube(cube_name)
+                .drilldowns(drilldowns)
+                .measures(measures)
+                .cuts(cuts)
+                .properties(properties)
+                .debug(debug)
+                .parents(parents)
+                .nonempty(nonempty)
+                .distinct(distinct)
+                .format(format);
+
+            println!("{}", res.url().unwrap());
+            res.exec()?
         },
     };
 

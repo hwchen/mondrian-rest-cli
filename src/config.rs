@@ -28,6 +28,8 @@ use failure::Error;
 use std::env;
 use structopt::StructOpt;
 
+use api::ResponseFormat;
+
 #[derive(StructOpt, Debug)]
 #[structopt(
     name="Mondrian Rest Cli",
@@ -107,6 +109,11 @@ pub enum Command {
     )]
     Query {
         #[structopt(
+            help="Query specified cube")
+        ]
+        cube_name: String,
+
+        #[structopt(
             short="d",
             long="drilldown",
             help="Fully qualified name '.' delimited. Takes multiple.",
@@ -133,6 +140,34 @@ pub enum Command {
             help="Fully qualified name '.' delimited. Takes multiple.",
         )]
         properties: Vec<String>,
+
+        #[structopt(
+            long="debug",
+        )]
+        debug: bool,
+
+        #[structopt(
+            long="parents",
+        )]
+        parents: bool,
+
+        #[structopt(
+            long="nonempty",
+        )]
+        nonempty: bool,
+
+        #[structopt(
+            long="distinct",
+        )]
+        distinct: bool,
+
+        #[structopt(
+            short="f",
+            long="format",
+            help="json, jsonrecords, or csv",
+            default_value="json",
+        )]
+        format: ResponseFormat,
     }
 }
 
