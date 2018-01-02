@@ -46,7 +46,9 @@ fn run() -> Result<(), Error> {
             if let Some(cube) = cube_name {
                 res.cube(cube);
             }
-            println!("{}", res.url().unwrap());
+            if config.verbose {
+                println!("{}", res.url().unwrap());
+            }
             res.exec()?
         },
         Command::Test {..} => {
@@ -94,7 +96,9 @@ fn run() -> Result<(), Error> {
                 .distinct(distinct)
                 .format(format);
 
-            println!("{}", res.url().unwrap());
+            if config.verbose {
+                println!("{}", res.url().unwrap());
+            }
             res.exec()?
         },
     };

@@ -244,7 +244,7 @@ pub fn flush<S: Into<String>>(base_url: S, secret: S) -> Result<(), Error> {
     url = url.join("flush/")?;
 
     url.query_pairs_mut().append_pair("secret", &secret.into());
-    println!("{}", url.as_str());
+    //println!("{}", url.as_str());
 
     let mut resp = reqwest::get(url)?;
 
@@ -252,19 +252,6 @@ pub fn flush<S: Into<String>>(base_url: S, secret: S) -> Result<(), Error> {
     ensure!(resp.status().is_success(), "error");
 
     Ok(())
-}
-
-pub fn describe(base_url: String, cube_name: Option<String>) -> Result<String, Error> {
-    let mut url = base_url;
-    url.push_str("/cubes");
-    if let Some(cube) = cube_name {
-        url.push_str(&cube);
-    }
-    println!("{}", url);
-    let mut resp = reqwest::get(&url)?;
-    ensure!(resp.status().is_success(), "error");
-
-    Ok(resp.text()?)
 }
 
 // util fn
