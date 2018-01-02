@@ -37,10 +37,8 @@ fn main() {
 }
 
 fn run() -> Result<(), Error> {
-    let config = config::get_config()
-        .map_err(|err| {
-            err.context("Mondrian Rest Cli")
-        })?;
+    let config = config::get_config()?
+
     // TODO
     // Generate mondrianbuilder here
     // Then choose either exec or url in the last branch.
