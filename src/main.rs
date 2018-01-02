@@ -37,7 +37,7 @@ fn main() {
 }
 
 fn run() -> Result<(), Error> {
-    let config = config::get_config()?
+    let config = config::get_config()?;
 
     // TODO
     // Generate mondrianbuilder here
