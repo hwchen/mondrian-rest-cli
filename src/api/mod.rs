@@ -246,7 +246,7 @@ pub fn flush<S: Into<String>>(base_url: S, secret: S) -> Result<(), Error> {
     url.query_pairs_mut().append_pair("secret", &secret.into());
     //println!("{}", url.as_str());
 
-    let mut resp = reqwest::get(url)?;
+    let resp = reqwest::get(url)?;
 
     // TODO return a good error
     ensure!(resp.status().is_success(), "error");
