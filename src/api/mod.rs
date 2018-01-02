@@ -122,7 +122,7 @@ impl QueryBuilder {
         let mut resp = reqwest::get(url)?;
 
         // TODO return a good error
-        ensure!(resp.status().is_success(), "error");
+        ensure!(resp.status().is_success(), format!("{}: {}", resp.status(), resp.text()?));
 
         Ok(resp.text()?)
     }
@@ -241,15 +241,15 @@ pub fn flush<S: Into<String>>(base_url: S, secret: S) -> Result<(), Error> {
     add_trailing_slash(&mut base_url);
 
     let mut url = Url::parse(&base_url)?;
-    url = url.join("flush/")?;
+    url = url.join("flush")?;
 
     url.query_pairs_mut().append_pair("secret", &secret.into());
     //println!("{}", url.as_str());
 
-    let resp = reqwest::get(url)?;
+    let mut resp = reqwest::get(url)?;
 
     // TODO return a good error
-    ensure!(resp.status().is_success(), "error");
+    ensure!(resp.status().is_success(), format!("{}: {}", resp.status(), resp.text()?));
 
     Ok(())
 }

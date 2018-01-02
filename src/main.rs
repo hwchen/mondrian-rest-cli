@@ -73,6 +73,9 @@ fn run() -> Result<(), Error> {
             "\nTest Complete".to_owned()
         },
         Command::Flush {secret} => {
+            if config.verbose {
+                println!("secret: {}", secret.as_ref().unwrap());
+            }
             api::flush(config.base_url.unwrap(), secret.unwrap())?;
             "Flush complete".to_owned()
         },
