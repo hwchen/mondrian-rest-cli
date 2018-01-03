@@ -267,8 +267,10 @@ fn add_trailing_slash(s: &mut String) {
 fn format_backtrace(s: String) -> String {
     let try_de: Result<MonError, _> = serde_json::from_str(&s);
 
+    // Need one more format for runtime errors that are caught.
+    // Which appear to be {"error": "error description"}
     if let Ok(err) = try_de {
-        // for query runtime errors
+        // for query runtime errors that are uncaught
         err.error[0].clone()
     } else {
         // for flush runtime errors

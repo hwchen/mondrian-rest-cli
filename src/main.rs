@@ -129,6 +129,11 @@ fn run() -> Result<(), Error> {
 }
 
 fn test_cube(cube_description: &CubeDescription, base_url: &str, cube_name: &str, verbose: bool) -> Result<(), Error> {
+    // Test strategy, to prevent all combinations being tested:
+    // 2 runs
+    // - all dims with one measure
+    // - one dim with all measures
+
     let test_dim_mea = cube_description.test_dim_mea();
     if verbose {
         println!("{}", test_dim_mea);
@@ -141,17 +146,28 @@ fn test_cube(cube_description: &CubeDescription, base_url: &str, cube_name: &str
         .map(|s| s.parse())
         .collect::<Result<Vec<_>, Error>>()?;
 
-    let mut req = api::query(base_url.to_owned());
-    req.cube(cube_name)
+    let mut req1 = api::query(base_url.to_owned());
+    req1.cube(cube_name)
         .drilldowns(drilldowns)
+        .measure(measures[0]);
+
+    let mut req2 = api::query(base_url.to_owned());
+    req2.cube(cube_name)
+        .drilldown(drilldowns[0])
         .measures(measures);
 
+
     if verbose {
-        println!("Url:\n{}\n", req.url().unwrap());
+        println!("Url:\n{}\n", req1.url().unwrap());
+        println!("Url:\n{}\n", req2.url().unwrap());
     }
 
-    req.exec().and_then(|_| {
-        println!("{}: passed", cube_name);
-        Ok(())
-    })
+    req1.exec()
+        .and_then(|_| {
+            req2.exec()
+        })
+        .and_then(|_| {
+            println!("{}: passed", cube_name);
+            Ok(())
+        })
 }
