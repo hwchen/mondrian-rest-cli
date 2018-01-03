@@ -4,6 +4,7 @@ mod names;
 
 use failure::Error;
 use reqwest::{self, Url};
+use serde_json;
 use std::fmt;
 use std::str::FromStr;
 
@@ -122,7 +123,7 @@ impl QueryBuilder {
         let mut resp = reqwest::get(url)?;
 
         // TODO return a good error
-        ensure!(resp.status().is_success(), format!("{}: {}", resp.status(), resp.text()?));
+    ensure!(resp.status().is_success(), format!("[{}]:\n{}", resp.status(), format_backtrace(resp.text()?)));
 
         Ok(resp.text()?)
     }
@@ -158,7 +159,7 @@ impl QueryBuilder {
                 }
                 for measure in &self.measures {
                     url.query_pairs_mut()
-                        .append_pair("measure[]", &measure.to_string());
+                        .append_pair("measures[]", &measure.to_string());
                 }
                 for cut in &self.cuts {
                     url.query_pairs_mut()
@@ -249,7 +250,7 @@ pub fn flush<S: Into<String>>(base_url: S, secret: S) -> Result<(), Error> {
     let mut resp = reqwest::get(url)?;
 
     // TODO return a good error
-    ensure!(resp.status().is_success(), format!("{}: {}", resp.status(), resp.text()?));
+    ensure!(resp.status().is_success(), format!("[{}]:\n{}", resp.status(), format_backtrace(resp.text()?)));
 
     Ok(())
 }
@@ -261,6 +262,27 @@ fn add_trailing_slash(s: &mut String) {
             s.push('/');
         }
     }
+}
+
+fn format_backtrace(s: String) -> String {
+    let try_de: Result<MonError, _> = serde_json::from_str(&s);
+
+    if let Ok(err) = try_de {
+        // for query runtime errors
+        err.error[0].clone()
+    } else {
+        // for flush runtime errors
+        s.lines()
+            .take(2)
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+
+}
+
+#[derive(Debug, Deserialize)]
+struct MonError {
+    error: Vec<String>,
 }
 
 
