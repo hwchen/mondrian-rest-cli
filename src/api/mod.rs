@@ -167,7 +167,7 @@ impl QueryBuilder {
                 }
                 for property in &self.properties {
                     url.query_pairs_mut()
-                        .append_pair("property[]", &property.to_string());
+                        .append_pair("properties[]", &property.to_string());
                 }
 
                 url.query_pairs_mut()
