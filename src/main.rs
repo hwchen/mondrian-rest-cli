@@ -26,7 +26,8 @@ mod schema;
 use config::Command;
 use failure::Error;
 
-use schema::CubeDescription;
+use api::names::{Drilldown, Measure, Cut, Property};
+use schema::{CubeDescription};
 
 fn main() {
     if let Err(err) = run() {
@@ -141,19 +142,22 @@ fn test_cube(cube_description: &CubeDescription, base_url: &str, cube_name: &str
 
     let drilldowns = test_dim_mea.dims.iter()
         .map(|s| s.parse())
-        .collect::<Result<Vec<_>, Error>>()?;
+        .collect::<Result<Vec<Drilldown>, Error>>()?;
     let measures = test_dim_mea.meas.iter()
         .map(|s| s.parse())
-        .collect::<Result<Vec<_>, Error>>()?;
+        .collect::<Result<Vec<Measure>, Error>>()?;
+
+    let m = measures[0].clone();
+    let d = drilldowns[0].clone();
 
     let mut req1 = api::query(base_url.to_owned());
     req1.cube(cube_name)
         .drilldowns(drilldowns)
-        .measure(measures[0]);
+        .measure(m);
 
     let mut req2 = api::query(base_url.to_owned());
     req2.cube(cube_name)
-        .drilldown(drilldowns[0])
+        .drilldown(d)
         .measures(measures);
 
 

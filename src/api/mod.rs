@@ -1,6 +1,6 @@
 /// Interface to mondrian rest api
 
-mod names;
+pub mod names;
 
 use failure::Error;
 use reqwest::{self, Url};
