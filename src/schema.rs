@@ -49,7 +49,7 @@ impl CubeDescription {
     pub fn test_dim_mea(&self) -> Test {
         let mut test_dims = Vec::new();
         for dim in &self.dimensions {
-            let lvl = dim.hierarchies.last().and_then(|hier| hier.levels.last());
+            let lvl = dim.hierarchies.first().and_then(|hier| hier.levels.first());
             if let Some(lvl) = lvl {
                 test_dims.push(lvl.full_name.clone());
             }

@@ -26,7 +26,7 @@ mod schema;
 use config::Command;
 use failure::Error;
 
-use api::names::{Drilldown, Measure, Cut, Property};
+use api::names::{Drilldown, Measure};
 use schema::{CubeDescription};
 
 fn main() {
@@ -147,31 +147,20 @@ fn test_cube(cube_description: &CubeDescription, base_url: &str, cube_name: &str
         .map(|s| s.parse())
         .collect::<Result<Vec<Measure>, Error>>()?;
 
-    let m = measures[0].clone();
-    let d = drilldowns[0].clone();
-
-    let mut req1 = api::query(base_url.to_owned());
-    req1.cube(cube_name)
-        .drilldowns(drilldowns)
-        .measure(m);
-
-    let mut req2 = api::query(base_url.to_owned());
-    req2.cube(cube_name)
-        .drilldown(d)
-        .measures(measures);
+    for drilldown in drilldowns {
+        let mut req = api::query(base_url.to_owned());
+        req.cube(cube_name)
+            .drilldown(drilldown)
+            .measures(measures.clone());
 
 
-    if verbose {
-        println!("Url:\n{}\n", req1.url().unwrap());
-        println!("Url:\n{}\n", req2.url().unwrap());
+        if verbose {
+            println!("Test url:\n{}\n", req.url().unwrap());
+        }
+
+        req.exec().map(|_|())?;
     }
 
-    req1.exec()
-        .and_then(|_| {
-            req2.exec()
-        })
-        .and_then(|_| {
-            println!("{}: passed", cube_name);
-            Ok(())
-        })
+    println!("{}: passed", cube_name);
+    Ok(())
 }
