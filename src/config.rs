@@ -162,6 +162,11 @@ pub enum Command {
         distinct: bool,
 
         #[structopt(
+            long="sparse",
+        )]
+        sparse: bool,
+
+        #[structopt(
             short="f",
             long="format",
             help="json, jsonrecords, or csv",

@@ -22,6 +22,7 @@ pub struct QueryBuilder {
     parents: bool,
     nonempty: bool,
     distinct: bool,
+    sparse: bool,
     format: ResponseFormat,
 }
 
@@ -38,6 +39,7 @@ impl Default for QueryBuilder {
             parents: false,
             nonempty: false,
             distinct: false,
+            sparse: false,
             format: ResponseFormat::Json,
         }
     }
@@ -110,6 +112,11 @@ impl QueryBuilder {
         self
     }
 
+    pub fn sparse(&mut self, sparse: bool) -> &mut Self {
+        self.sparse = sparse;
+        self
+    }
+
     pub fn format(&mut self, format: ResponseFormat) -> &mut Self {
         self.format = format;
         self
@@ -178,6 +185,8 @@ impl QueryBuilder {
                     .append_pair("nonempty", &self.nonempty.to_string());
                 url.query_pairs_mut()
                     .append_pair("distinct", &self.distinct.to_string());
+                url.query_pairs_mut()
+                    .append_pair("sparse", &self.sparse.to_string());
             }
         } else {
             // if there is no cube name and there's a query, return

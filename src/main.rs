@@ -90,6 +90,7 @@ fn run() -> Result<(), Error> {
             parents,
             nonempty,
             distinct,
+            sparse,
             format,
             } =>
         {
@@ -116,6 +117,7 @@ fn run() -> Result<(), Error> {
                 .parents(parents)
                 .nonempty(nonempty)
                 .distinct(distinct)
+                .sparse(sparse)
                 .format(format);
 
             if config.verbose {
