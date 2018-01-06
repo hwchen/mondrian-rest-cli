@@ -75,6 +75,20 @@ pub enum Command {
             help="Describe specified cube; empty arg will retrieve all cubes")
         ]
         cube_name: Option<String>,
+
+        #[structopt(
+            short="m",
+            long="members",
+            help="Get members info for specified level (fully qualified name)",
+        )]
+        members: String,
+
+        #[structopt(
+            short="r",
+            long="raw",
+            help="raw output for description",
+        )]
+        raw: bool,
     },
 
     #[structopt(
