@@ -46,8 +46,9 @@ impl fmt::Display for CubeDescription {
 }
 
 impl CubeDescription {
-    pub fn test_dim_mea(&self) -> Test {
+    pub fn test_drill_mea_prop(&self) -> Test {
         let mut test_dims = Vec::new();
+
         for dim in &self.dimensions {
             let lvl = dim.hierarchies.first().and_then(|hier| hier.levels.first());
             if let Some(lvl) = lvl {
@@ -55,16 +56,41 @@ impl CubeDescription {
             }
         }
 
+        let mut test_props = Vec::new();
+
+        for dim in &self.dimensions {
+            for hier in &dim.hierarchies {
+                for level in &hier.levels {
+
+                    if !level.properties.is_empty() {
+                        let level_name = level.full_name.to_owned();
+                        let properties = level.properties.iter()
+                            .map(|prop| {
+                                let prop = format!(".[{}]", prop);
+                                let mut prop_full_name = level_name.clone();
+                                prop_full_name.push_str(&prop);
+                                prop_full_name
+                            });
+
+                        test_props.extend(properties);
+                    }
+
+                }
+            }
+        }
+
         Test {
             name: self.name.clone(),
             dims: test_dims,
             meas: self.measures.iter().map(|mea| mea.name.clone()).collect(),
+            props: test_props,
         }
     }
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Dim {
+    name: String,
     hierarchies: Vec<Hier>,
 }
 
@@ -76,11 +102,13 @@ pub struct Hier {
 #[derive(Debug, Deserialize)]
 pub struct Lvl {
     full_name: String,
+    properties: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Mea {
     name: String,
+    caption: String,
 }
 
 #[derive(Debug)]
@@ -88,6 +116,7 @@ pub struct Test {
     pub name: String,
     pub dims: Vec<String>,
     pub meas: Vec<String>,
+    pub props: Vec<String>,
 }
 
 
@@ -112,7 +141,14 @@ impl fmt::Display for Test {
             out.push_str("\n");
         }
 
-        // TODO add properties, named sets
+        out.push_str("  Properties:\n");
+        for prop in &self.props {
+            out.push_str("    ");
+            out.push_str(&prop);
+            out.push_str("\n");
+        }
+
+        // TODO named sets
 
         write!(f, "{}", out)
     }

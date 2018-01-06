@@ -26,7 +26,7 @@ mod schema;
 use config::Command;
 use failure::Error;
 
-use api::names::{Drilldown, Measure};
+use api::names::{Drilldown, Measure, Property};
 use schema::{CubeDescription};
 
 fn main() {
@@ -137,17 +137,20 @@ fn test_cube(cube_description: &CubeDescription, base_url: &str, cube_name: &str
     // - all dims with one measure
     // - one dim with all measures
 
-    let test_dim_mea = cube_description.test_dim_mea();
+    let test_drill_mea_prop = cube_description.test_drill_mea_prop();
     if verbose {
-        println!("{}", test_dim_mea);
+        println!("{}", test_drill_mea_prop);
     }
 
-    let drilldowns = test_dim_mea.dims.iter()
+    let drilldowns = test_drill_mea_prop.dims.iter()
         .map(|s| s.parse())
         .collect::<Result<Vec<Drilldown>, Error>>()?;
-    let measures = test_dim_mea.meas.iter()
+    let measures = test_drill_mea_prop.meas.iter()
         .map(|s| s.parse())
         .collect::<Result<Vec<Measure>, Error>>()?;
+    let properties = test_drill_mea_prop.props.iter()
+        .map(|s| s.parse())
+        .collect::<Result<Vec<Property>, Error>>()?;
 
     for drilldown in drilldowns {
         let mut req = api::query(base_url.to_owned());
@@ -155,6 +158,20 @@ fn test_cube(cube_description: &CubeDescription, base_url: &str, cube_name: &str
             .drilldown(drilldown)
             .measures(measures.clone());
 
+
+        if verbose {
+            println!("Test url:\n{}\n", req.url().unwrap());
+        }
+
+        req.exec().map(|_|())?;
+    }
+
+    for property in properties {
+        let mut req = api::query(base_url.to_owned());
+        req.cube(cube_name)
+            .drilldown(property.drill_level())
+            .measures(measures.clone())
+            .property(property);
 
         if verbose {
             println!("Test url:\n{}\n", req.url().unwrap());

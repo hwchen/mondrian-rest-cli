@@ -309,6 +309,13 @@ impl Property {
                 ))
             })?)
     }
+
+    /// returns the level in Drilldown form.
+    /// Used in testing to be able to drilldown and get property
+    /// simultaneously
+    pub fn drill_level(&self) -> Drilldown {
+        Drilldown(self.level_name.clone())
+    }
 }
 
 impl fmt::Display for Property {
