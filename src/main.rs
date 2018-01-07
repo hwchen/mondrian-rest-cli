@@ -46,7 +46,12 @@ fn run() -> Result<(), Error> {
     // Or should I only generate url from api, then use reqwest.
     // How much deserializing should I do?
     let out = match config.cmd {
-        Command::Describe {cube_name} => {
+        Command::Describe {
+            cube_name,
+            members,
+            raw,
+            } =>
+        {
             let mut req = api::query(config.base_url.unwrap());
             if let Some(cube) = cube_name {
                 req.cube(cube);

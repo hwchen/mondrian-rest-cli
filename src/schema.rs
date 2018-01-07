@@ -10,8 +10,9 @@ pub struct CubeDescriptions {
 #[derive(Debug, Deserialize)]
 pub struct CubeDescription {
     pub name: String,
-    dimensions: Vec<Dim>,
-    measures: Vec<Mea>,
+    dimensions: Vec<Dimension>,
+    measures: Vec<Measure>,
+    annotations: Vec<String>,
 }
 
 impl fmt::Display for CubeDescription {
@@ -89,26 +90,38 @@ impl CubeDescription {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Dim {
+pub struct Dimension {
     name: String,
-    hierarchies: Vec<Hier>,
+    caption: String,
+    annotations: Vec<String>,
+    hierarchies: Vec<Hierarchy>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Hier {
-    levels: Vec<Lvl>,
+pub struct Hierarchy {
+    name: String,
+    has_all: bool,
+    all_member_name: String,
+    levels: Vec<Level>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Lvl {
+pub struct Level {
+    name: String,
     full_name: String,
+    depth: u32,
+    caption: String,
+    annotations: Vec<String>,
     properties: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Mea {
+pub struct Measure {
     name: String,
     caption: String,
+    annotations: Vec<String>,
+    full_name: String,
+    aggregator: String,
 }
 
 #[derive(Debug)]
