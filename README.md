@@ -2,34 +2,104 @@
 
 cli utility for interacting with [mondrian-rest](https://github.com/jazzido/mondrian-rest)
 
-# Interface
+Works with mondrian-rest v.0.7.9. Not guaranteed to work with older versions, although many of the options should work.
 
-cubes
-    - no arg: all cubes and dims info
-    - arg: cube name: cube info
+# Installation
+## From Source
+- Install [rustup](https://rustup.rs)
+- `$ cargo update`
+- `$ cargo install --git https://github.com/hwchen/mondrian-rest-cli`
 
-test
-    - no arg: all cubes
-    - arg: cube name
+## Download binaries
+- coming soon
 
-flush
-    - arg/env var: key
+# Usage
+```
+Note: all subcommands have alias of the first letter of the subcommand.
 
-query
-    - arg: cube name
-    - option: drilldown
-    - option: cut
-    - option: measure
-    - flags: parents, debug, etc
-    - option: output (json, jsonrecord, csv)
-    - option: debug (url, js)
+USAGE:
+    mondrian-rest-cli [FLAGS] [OPTIONS] <SUBCOMMAND>
 
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+    -v               Verbose flag
 
-global option/env var: base url
+OPTIONS:
+    -b, --base_url <base_url>    Base url; this or env var MON_CLI_BASE_URL must be set
 
-# Dependencies
-Testing out some new libs
+SUBCOMMANDS:
+    describe    Gets information about cubes
+    flush       Asks mondrian server to flush schema and cache and reset
+    help        Prints this message or the help of the given subcommand(s)
+    query       Runs a query on a cube
+    test        Tests schema for errors
 
-- anterofit (rest client framework)
-- structopt (clap with custom derive)
-- failure (error management, moving on from error-chain)
+NOTE:
+    Multi-arg options can be specified using either one
+    flag or several, the following are equivalent here:
+
+    -o arg1 arg2 arg3
+    -o arg1 -o arg2 -o arg3
+
+    This is especially useful when constructing queries
+```
+
+## describe
+Fetch description of a cube or cubes in schema.
+
+```
+selected FLAGS:
+    -r, --raw        raw output for description
+
+OPTIONS:
+    -m, --members <members>    Get members info for specified level (fully qualified name)
+
+ARGS:
+    <cube_name>    Describe specified cube; empty arg will retrieve all cubes
+```
+
+## flush
+Refresh Mondrian server
+
+```
+ARGS:
+    <secret>    Secret; this or env var MON_CLI_SECRET must be set
+```
+
+## test
+Testing for runtime errors such as wrong db columns.
+
+The basic strategy is to construct queries which include one dim and all measures, for all dims.
+
+Then to also construct queries for each property.
+
+Note: named sets for testing not yet supported.
+
+```
+ARGS:
+    <cube_name>    Test specified cube; empty arg will test all cubes
+```
+
+## query
+Constructs general query to mondrian rest server.
+
+```
+selected FLAGS:
+    --debug
+    --distinct
+    --nonempty
+    --parents
+    --sparse
+
+OPTIONS:
+-c, --cut <cuts>...                Fully qualified name '.' delimited. Takes multiple.
+-d, --drilldown <drilldowns>...    Fully qualified name '.' delimited. Takes multiple.
+-f, --format <format>              json, jsonrecords, or csv [default: json]
+-m, --measure <measures>...        Fully qualified name '.' delimited. Takes multiple.
+-p, --property <properties>...     Fully qualified name '.' delimited. Takes multiple.
+
+ARGS:
+<cube_name>    Query specified cube
+
+```
