@@ -6,10 +6,12 @@ Works with mondrian-rest v.0.7.9. Not guaranteed to work with older versions, al
 
 # Examples
 
+Get members of a level
 ```
 mondrian-rest-cli -b http://10.100.10.10:5000 describe exports -m 'Category.Category'
 ```
 
+Query with drilldown, measure, and cut and select format
 ```
 mondrian-rest-cli -b http://10.100.10.10:5000 q exports -d 'Geography.County' -m 'Dollars Sum' -c 'Year.Year.2016' -f csv
 ```
