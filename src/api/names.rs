@@ -63,6 +63,18 @@ impl LevelName {
             );
         }
     }
+
+    pub fn dimension(&self) -> &str {
+        self.dimension.as_str()
+    }
+
+    pub fn hierarchy(&self) -> &str {
+        self.hierarchy.as_str()
+    }
+
+    pub fn level(&self) -> &str {
+        self.level.as_str()
+    }
 }
 
 impl fmt::Display for LevelName {

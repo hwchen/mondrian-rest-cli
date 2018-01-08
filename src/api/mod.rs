@@ -8,12 +8,13 @@ use serde_json;
 use std::fmt;
 use std::str::FromStr;
 
-pub use self::names::{Drilldown, Measure, Cut, Property};
+pub use self::names::{LevelName, Drilldown, Measure, Cut, Property};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct QueryBuilder {
     base_url: String,
     cube_name: Option<String>,
+    members: Option< LevelName>,
     drilldowns: Vec<Drilldown>,
     measures: Vec<Measure>,
     cuts: Vec<Cut>,
@@ -31,6 +32,7 @@ impl Default for QueryBuilder {
         QueryBuilder {
             base_url: "".to_owned(),
             cube_name: None,
+            members: None,
             drilldowns: Vec::new(),
             measures: Vec::new(),
             cuts: Vec::new(),
@@ -49,6 +51,13 @@ impl Default for QueryBuilder {
 impl QueryBuilder {
     pub fn cube<S: Into<String>>(&mut self, cube_name: S) -> &mut Self {
         self.cube_name = Some(cube_name.into());
+        self
+    }
+
+    /// Returns &Self so that no more changes can be made
+    /// but exec and url can still be called
+    pub fn members(&mut self, level_name: LevelName) -> &Self {
+        self.members = Some(level_name);
         self
     }
 
@@ -138,6 +147,58 @@ impl QueryBuilder {
     /// The other finalizer
     /// return the url
     pub fn url(&self) -> Result<Url, Error> {
+        // Check that members has cube_name (also checked in cli,
+        // but good to check in lib too.)
+        //
+        // Also check that there aren't other builders called; could just
+        // ignore, since members has to be the last builder called,
+        // but provides more clarity as to how the api should be used.
+
+        // Then do members first
+
+        if let Some(ref members) = self.members {
+            if self.cube_name.is_none() {
+                bail!("Members call requires a cube name");
+            }
+
+            if !self.drilldowns.is_empty() ||
+                !self.measures.is_empty() ||
+                !self.cuts.is_empty() ||
+                !self.properties.is_empty()
+            {
+                bail!("Members call should not include query parameters");
+            }
+
+            let mut base_url = self.base_url.clone();
+            add_trailing_slash(&mut base_url);
+
+            let mut url = Url::parse(&self.base_url)?;
+            url = url.join("cubes/")?;
+
+            // cube_name must be Some, from above early return
+            let mut cube_name = self.cube_name.as_ref().unwrap().clone();
+            add_trailing_slash(&mut cube_name);
+            url = url.join(&cube_name)?;
+
+            url = url.join("dimensions/")?;
+
+            let mut dim_name = members.dimension().to_owned();
+            add_trailing_slash(&mut dim_name);
+            url = url.join(&dim_name)?;
+
+            url = url.join("levels/")?;
+
+            let mut lvl_name = members.level().to_owned();
+            add_trailing_slash(&mut lvl_name);
+            url = url.join(&lvl_name)?;
+
+            url = url.join("members")?;
+
+            return Ok(url)
+        }
+
+        // Special case of members done,
+        // Now move onto general query
         let mut base_url = self.base_url.clone();
         add_trailing_slash(&mut base_url);
 

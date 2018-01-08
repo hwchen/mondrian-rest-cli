@@ -1,12 +1,14 @@
 // Worklist:
 // x implement display and FromStr for qualified names
-// - implement full url builder for querybuilder (including output formats)
-// - implement serde json to allow for parsing of cube descriptions for testing
-// - implement testing (flush, describe, query all dims of a cube)
-// - implement better error reporting (runtime Java error, and NaN for json, etc.)
+// x implement full url builder for querybuilder (including output formats)
+// x implement serde json to allow for parsing of cube descriptions for testing
+// x implement testing (flush, describe, query all dims of a cube)
+// x implement better error reporting (runtime Java error, and NaN for json, etc.)
 //
 // Future:
 // - use parser for Cut
+// - implement state machine for builder, to better control pattern. Now that
+//     members, flush, query, etc. are all possibilities.
 
 #[macro_use]
 extern crate failure;
@@ -26,7 +28,7 @@ mod schema;
 use config::Command;
 use failure::Error;
 
-use api::names::{Drilldown, Measure, Property};
+use api::names::{Drilldown, Measure, Property, LevelName};
 use schema::{CubeDescription};
 
 fn main() {
@@ -55,11 +57,25 @@ fn run() -> Result<(), Error> {
             let mut req = api::query(config.base_url.unwrap());
             if let Some(cube) = cube_name {
                 req.cube(cube);
+
+                if let Some(members) = members {
+                    let lvl_name = members.parse::<LevelName>()?;
+                    req.members(lvl_name);
+                }
             }
+
             if config.verbose {
                 println!("{}", req.url().unwrap());
             }
-            req.exec()?
+
+            let resp = req.exec()?;
+
+            if raw {
+                resp
+            } else {
+                let cube: schema::CubeDescription = serde_json::from_str(&resp)?;
+                cube.to_string()
+            }
         },
         Command::Test {cube_name} => {
             let mut req = api::query(config.base_url.clone().unwrap());

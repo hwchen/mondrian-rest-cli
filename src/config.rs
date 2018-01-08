@@ -77,11 +77,12 @@ pub enum Command {
         cube_name: Option<String>,
 
         #[structopt(
+            requires="cube_name",
             short="m",
             long="members",
             help="Get members info for specified level (fully qualified name)",
         )]
-        members: String,
+        members: Option<String>,
 
         #[structopt(
             short="r",
