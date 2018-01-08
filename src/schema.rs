@@ -3,6 +3,8 @@
 use std::collections::HashMap;
 use std::fmt;
 
+use api::names::LevelName;
+
 #[derive(Debug, Deserialize)]
 pub struct CubeDescriptions {
     pub cubes: Vec<CubeDescription>,
@@ -13,6 +15,7 @@ pub struct CubeDescription {
     pub name: String,
     dimensions: Vec<Dimension>,
     measures: Vec<Measure>,
+    named_sets: Vec<NamedSet>,
     annotations: HashMap<String,String>,
 }
 
@@ -23,9 +26,17 @@ impl fmt::Display for CubeDescription {
         out.push_str(&self.name);
         out.push_str("\n");
 
+        for (k, v) in &self.annotations {
+            out.push_str(format!("  ({}: {})\n", k, v).as_str());
+        }
+
         out.push_str("  Dimensions, Hierarchies, and Levels:\n");
         for dim in &self.dimensions {
+            for (k, v) in &dim.annotations {
+                out.push_str(format!("    ({}: {})\n", k, v).as_str());
+            }
             for hier in &dim.hierarchies {
+                // no hierarchy annotations for now
                 for lvl in &hier.levels[1..] {
                     out.push_str("    ");
                     out.push_str(&lvl.full_name);
@@ -36,18 +47,47 @@ impl fmt::Display for CubeDescription {
                         out.push_str(prop);
                         out.push_str(" (property)\n");
                     }
+
+                    for (k, v) in &lvl.annotations {
+                        out.push_str(format!("      ({}: {})\n", k, v).as_str());
+                    }
                 }
             }
         }
 
-        out.push_str("  Measures:\n");
-        for mea in &self.measures {
+        if !self.named_sets.is_empty() {
+            out.push_str("  Named Sets:\n");
+        }
+        for named_set in &self.named_sets {
+            for (k, v) in &named_set.annotations {
+                out.push_str(format!("    ({}: {})\n", k, v).as_str());
+            }
+
+            let level_name = LevelName::new(
+                named_set.dimension.to_owned(),
+                named_set.hierarchy.to_owned(),
+                named_set.level.to_owned());
             out.push_str("    ");
-            out.push_str(&mea.name);
+            out.push_str(&named_set.name);
+            out.push_str(": ");
+            out.push_str(level_name.to_string().as_str());
             out.push_str("\n");
         }
 
-        // TODO add properties, named sets
+        out.push_str("  Measures:\n");
+        for mea in &self.measures {
+            for (k, v) in &mea.annotations {
+                out.push_str(format!("    ({}: {})\n", k, v).as_str());
+            }
+
+            out.push_str("    ");
+            out.push_str(&mea.name);
+            if let Some(ref agg) = mea.aggregator {
+                out.push_str(" | agg: ");
+                out.push_str(&agg);
+            }
+            out.push_str("\n");
+        }
 
         write!(f, "{}", out)
     }
@@ -128,7 +168,16 @@ pub struct Measure {
     caption: String,
     annotations: HashMap<String,String>,
     full_name: String,
-    aggregator: String,
+    aggregator: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct NamedSet {
+    name: String,
+    dimension: String,
+    hierarchy: String,
+    level: String,
+    annotations: HashMap<String,String>,
 }
 
 #[derive(Debug)]
