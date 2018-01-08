@@ -128,3 +128,11 @@ ARGS:
 <cube_name>    Query specified cube
 
 ```
+
+# Future work
+
+- increase timeout?
+- CI and binary releases
+- redo url builder as state machine
+- separate http request execution from url builder
+
