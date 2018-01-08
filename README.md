@@ -6,14 +6,29 @@ Works with mondrian-rest v.0.7.9. Not guaranteed to work with older versions, al
 
 # Examples
 
-Get members of a level
+Describe one cube
+```
+mondrian-rest-cli -b http://10.100.10.10:5000 describe exports
+```
+
+Get members of a level (key: caption)
 ```
 mondrian-rest-cli -b http://10.100.10.10:5000 describe exports -m 'Category.Category'
 ```
 
-Query with drilldown, measure, and cut and select format
+Query with drilldown, measure, and cut and format csv; sparse and debug options
 ```
-mondrian-rest-cli -b http://10.100.10.10:5000 q exports -d 'Geography.County' -m 'Dollars Sum' -c 'Year.Year.2016' -f csv
+mondrian-rest-cli -b http://10.100.10.10:5000 q exports -d 'Geography.County' -m 'Dollars Sum' -c 'Year.Year.2016' --sparse --debug -f csv
+```
+
+Test a cube
+```
+mondrian-rest-cli -b http://10.100.10.10:5000 t exports
+```
+
+Flush the mondrian server
+```
+mondrian-rest-cli -b http://10.100.10.10:5000 f secret123
 ```
 
 # Installation
@@ -26,7 +41,6 @@ mondrian-rest-cli -b http://10.100.10.10:5000 q exports -d 'Geography.County' -m
 - coming soon
 
 # Usage
-```
 Note: all subcommands have alias of the first letter of the subcommand.
 
 Note on naming:
@@ -41,7 +55,9 @@ Note on naming:
   - [Geography].[County].&[1,2]
   - [Geography].[County].[&1,&2]
   I try to remove as many leading ampersands as possible. File a bug if something unexpected happens.
+  (This is _not_ how Mondrian parses multiple members afaik, this is just for cli convenience)
 
+```
 USAGE:
     mondrian-rest-cli [FLAGS] [OPTIONS] <SUBCOMMAND>
 
@@ -109,6 +125,10 @@ ARGS:
 ## query
 Constructs general query to mondrian rest server.
 
+Note on cuts:
+
+There can be cuts on multiple dimensions, just use `-c` multiple times. One cut of a dimension can contain multiple members, e.g. `Geography.County.1,2,3`.
+
 ```
 selected FLAGS:
     --debug
@@ -128,3 +148,11 @@ ARGS:
 <cube_name>    Query specified cube
 
 ```
+
+# Future work
+
+- increase timeout?
+- CI and binary releases
+- redo url builder as state machine
+- separate http request execution from url builder
+
