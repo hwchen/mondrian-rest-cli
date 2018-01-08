@@ -479,10 +479,14 @@ mod test {
         let cut2_test_1 = "Geography.Geography.County.1,2".parse::<Cut>().unwrap();
         let cut2_test_2 = "[Geography].[Geography].[County].&[1,2]".parse::<Cut>().unwrap();
         let cut2_test_3 = "Geography.County.1,2".parse::<Cut>().unwrap();
+        let cut2_test_4 = "Geography.County.&1,2".parse::<Cut>().unwrap();
+        let cut2_test_5 = "Geography.County.&1,&2".parse::<Cut>().unwrap();
 
         assert_eq!(cut2, cut2_test_1);
         assert_eq!(cut2, cut2_test_2);
         assert_eq!(cut2, cut2_test_3);
+        assert_eq!(cut2, cut2_test_4);
+        assert_eq!(cut2, cut2_test_5);
 
         // test property
         let property_test_1 = "Geography.Geography.County.name_en".parse::<Property>().unwrap();
