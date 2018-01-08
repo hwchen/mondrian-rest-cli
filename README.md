@@ -4,6 +4,16 @@ cli utility for interacting with [mondrian-rest](https://github.com/jazzido/mond
 
 Works with mondrian-rest v.0.7.9. Not guaranteed to work with older versions, although many of the options should work.
 
+# Examples
+
+```
+mondrian-rest-cli -b http://10.100.10.10:5000 describe exports -m 'Category.Category'
+```
+
+```
+mondrian-rest-cli -b http://10.100.10.10:5000 q exports -d 'Geography.County' -m 'Dollars Sum' -c 'Year.Year.2016' -f csv
+```
+
 # Installation
 ## From Source
 - Install [rustup](https://rustup.rs)
@@ -16,6 +26,19 @@ Works with mondrian-rest v.0.7.9. Not guaranteed to work with older versions, al
 # Usage
 ```
 Note: all subcommands have alias of the first letter of the subcommand.
+
+Note on naming:
+
+- The easiest way to name levels is to separate each part of a level name by a period, e.g. "Geography.County".
+- Names with square brackets should also parse correctly; please file a bug if there's a mistake. e.g. "[Geography].[County]"
+- Names without a hierarchy will use the default hierarchy of the Dimension name.
+- For member names, the following should all be equivalent. Note that there is easy syntax for multiple members:
+  - Geography.County.1,2
+  - Geography.County.&1
+  - Geography.County.&1,&2
+  - [Geography].[County].&[1,2]
+  - [Geography].[County].[&1,&2]
+  I try to remove as many leading ampersands as possible. File a bug if something unexpected happens.
 
 USAGE:
     mondrian-rest-cli [FLAGS] [OPTIONS] <SUBCOMMAND>
