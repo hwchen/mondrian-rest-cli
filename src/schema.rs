@@ -29,6 +29,12 @@ impl fmt::Display for CubeDescription {
                     out.push_str("    ");
                     out.push_str(&lvl.full_name);
                     out.push_str("\n");
+
+                    for prop in &lvl.properties {
+                        out.push_str("      ");
+                        out.push_str(prop);
+                        out.push_str(" (property)\n");
+                    }
                 }
             }
         }
