@@ -1,7 +1,9 @@
 /// structs for deserializing description of cube schema
 
+use serde::{de, Deserialize, Deserializer};
 use std::collections::HashMap;
 use std::fmt;
+use std::str::FromStr;
 
 use api::names::LevelName;
 
@@ -220,5 +222,68 @@ impl fmt::Display for Test {
         // TODO named sets
 
         write!(f, "{}", out)
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Members {
+    name: String,
+    caption: String,
+    members: Vec<Member>,
+}
+
+impl fmt::Display for Members {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut out = String::new();
+        out.push_str(format!("Members of Level {}:\n", self.name).as_str());
+
+        for member in &self.members {
+            out.push_str(member.to_string().as_str());
+        }
+
+        write!(f, "{}", out)
+    }
+}
+
+
+#[derive(Debug, Deserialize)]
+pub struct Member {
+    name: String,
+    full_name: String,
+    caption: String,
+    key: Key, // always string because it is sometimes str sometimes num
+    #[serde(rename = "all_member?")]
+    is_all_member: bool,
+    #[serde(rename = "drillable?")]
+    is_drillable: bool,
+    depth: u32,
+    num_children: u32,
+    parent_name: String,
+    level_name: String,
+    children: Vec<String>, // should be Vec of children, but don't need now
+}
+
+impl fmt::Display for Member {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut out = String::new();
+        out.push_str(format!("&{}: {}\n", self.key, self.name).as_str());
+
+        write!(f, "{}", out)
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum Key {
+    String(String),
+    Int(i64),
+}
+
+impl fmt::Display for Key {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Key::String(ref s) => write!(f, "{}", s),
+            Key::Int(ref i) => write!(f, "{}", i),
+        }
     }
 }

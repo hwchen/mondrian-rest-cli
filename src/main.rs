@@ -58,7 +58,7 @@ fn run() -> Result<(), Error> {
             if let Some(ref cube) = cube_name {
                 req.cube(cube.clone());
 
-                if let Some(members) = members {
+                if let Some(ref members) = members {
                     let lvl_name = members.parse::<LevelName>()?;
                     req.members(lvl_name);
                 }
@@ -74,8 +74,17 @@ fn run() -> Result<(), Error> {
                 resp
             } else {
                 if let Some(cube) = cube_name {
-                    let cube: schema::CubeDescription = serde_json::from_str(&resp)?;
-                    cube.to_string()
+                    let cube_or_members: String;
+
+                    if let Some(members) = members {
+                        let members: schema::Members = serde_json::from_str(&resp)?;
+                        cube_or_members = members.to_string();
+                    } else {
+                        let cube: schema::CubeDescription = serde_json::from_str(&resp)?;
+                        cube_or_members = cube.to_string();
+                    }
+
+                    cube_or_members
                 } else  {
                     let cubes: CubeDescriptions = serde_json::from_str(&resp)?;
                     cubes.cubes.iter().map(|cube| cube.to_string()).collect::<Vec<_>>().join("\n")
