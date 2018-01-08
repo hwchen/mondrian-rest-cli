@@ -29,7 +29,7 @@ use config::Command;
 use failure::Error;
 
 use api::names::{Drilldown, Measure, Property, LevelName};
-use schema::{CubeDescription};
+use schema::{CubeDescription, CubeDescriptions};
 
 fn main() {
     if let Err(err) = run() {
@@ -55,8 +55,8 @@ fn run() -> Result<(), Error> {
             } =>
         {
             let mut req = api::query(config.base_url.unwrap());
-            if let Some(cube) = cube_name {
-                req.cube(cube);
+            if let Some(ref cube) = cube_name {
+                req.cube(cube.clone());
 
                 if let Some(members) = members {
                     let lvl_name = members.parse::<LevelName>()?;
@@ -73,8 +73,13 @@ fn run() -> Result<(), Error> {
             if raw {
                 resp
             } else {
-                let cube: schema::CubeDescription = serde_json::from_str(&resp)?;
-                cube.to_string()
+                if let Some(cube) = cube_name {
+                    let cube: schema::CubeDescription = serde_json::from_str(&resp)?;
+                    cube.to_string()
+                } else  {
+                    let cubes: CubeDescriptions = serde_json::from_str(&resp)?;
+                    cubes.cubes.iter().map(|cube| cube.to_string()).collect::<Vec<_>>().join("\n")
+                }
             }
         },
         Command::Test {cube_name} => {

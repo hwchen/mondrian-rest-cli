@@ -1,5 +1,6 @@
 /// structs for deserializing description of cube schema
 
+use std::collections::HashMap;
 use std::fmt;
 
 #[derive(Debug, Deserialize)]
@@ -12,7 +13,7 @@ pub struct CubeDescription {
     pub name: String,
     dimensions: Vec<Dimension>,
     measures: Vec<Measure>,
-    annotations: Vec<String>,
+    annotations: HashMap<String,String>,
 }
 
 impl fmt::Display for CubeDescription {
@@ -99,7 +100,7 @@ impl CubeDescription {
 pub struct Dimension {
     name: String,
     caption: String,
-    annotations: Vec<String>,
+    annotations: HashMap<String,String>,
     hierarchies: Vec<Hierarchy>,
 }
 
@@ -117,7 +118,7 @@ pub struct Level {
     full_name: String,
     depth: u32,
     caption: String,
-    annotations: Vec<String>,
+    annotations: HashMap<String,String>,
     properties: Vec<String>,
 }
 
@@ -125,7 +126,7 @@ pub struct Level {
 pub struct Measure {
     name: String,
     caption: String,
-    annotations: Vec<String>,
+    annotations: HashMap<String,String>,
     full_name: String,
     aggregator: String,
 }
