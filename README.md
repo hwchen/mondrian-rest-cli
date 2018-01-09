@@ -4,6 +4,10 @@ cli utility for interacting with [mondrian-rest](https://github.com/jazzido/mond
 
 Works with mondrian-rest v.0.7.9. Not guaranteed to work with older versions, although many of the options should work.
 
+All responses can be accessed as the raw string. This tool does not parse, whether the response is csv or json. For working with data on the command line, I suggest:
+- [jq](https://stedolan.github.io/jq/)
+- [xsv](https://github.com/BurntSushi/xsv)
+
 # Examples
 
 Describe one cube
