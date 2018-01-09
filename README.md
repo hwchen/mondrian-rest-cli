@@ -48,15 +48,16 @@ Note on naming:
 - The easiest way to name levels is to separate each part of a level name by a period, e.g. "Geography.County".
 - Names with square brackets should also parse correctly; please file a bug if there's a mistake. e.g. "[Geography].[County]"
 - Names without a hierarchy will use the default hierarchy of the Dimension name.
-- For member names, the following should all be equivalent. Note that there is easy syntax for multiple members:
+- For member names, the following should all be equivalent.
   - Geography.County.1,2
   - Geography.County.&1,2
   - Geography.County.&1,&2
   - [Geography].[County].&[1,2]
   - [Geography].[County].[&1,&2]
-
-  I try to remove as many leading ampersands as possible. File a bug if something unexpected happens.
-  (This is _not_ how Mondrian parses multiple members afaik, this is just for cli convenience)
+- Note the above easy syntax for multiple members.
+- Also, for cuts be sure you are using the key and not the caption for a member.
+- I try to remove as many leading ampersands as possible for cut syntax. File a bug if something unexpected happens.
+- (This is _not_ how Mondrian parses multiple members afaik, this is just for cli convenience)
 
 ```
 USAGE:
