@@ -54,6 +54,7 @@ Note on naming:
   - Geography.County.&1,&2
   - [Geography].[County].&[1,2]
   - [Geography].[County].[&1,&2]
+
   I try to remove as many leading ampersands as possible. File a bug if something unexpected happens.
   (This is _not_ how Mondrian parses multiple members afaik, this is just for cli convenience)
 
