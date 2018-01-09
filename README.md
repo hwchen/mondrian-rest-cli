@@ -50,7 +50,7 @@ Note on naming:
 - Names without a hierarchy will use the default hierarchy of the Dimension name.
 - For member names, the following should all be equivalent. Note that there is easy syntax for multiple members:
   - Geography.County.1,2
-  - Geography.County.&1
+  - Geography.County.&1,2
   - Geography.County.&1,&2
   - [Geography].[County].&[1,2]
   - [Geography].[County].[&1,&2]
