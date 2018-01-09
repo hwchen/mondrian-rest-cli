@@ -54,10 +54,9 @@ Note on naming:
   - Geography.County.&1,&2
   - [Geography].[County].&[1,2]
   - [Geography].[County].[&1,&2]
-- Note the above easy syntax for multiple members.
+- Note the above easy syntax for multiple members. (This is _not_ how Mondrian parses multiple members afaik, this is just for cli convenience)
 - Also, for cuts be sure you are using the key and not the caption for a member.
 - I try to remove as many leading ampersands as possible for cut syntax. File a bug if something unexpected happens.
-- (This is _not_ how Mondrian parses multiple members afaik, this is just for cli convenience)
 
 ```
 USAGE:
