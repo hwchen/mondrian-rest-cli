@@ -186,6 +186,12 @@ impl QueryBuilder {
             add_trailing_slash(&mut dim_name);
             url = url.join(&dim_name)?;
 
+            url = url.join("hierarchies/")?;
+
+            let mut hier_name = members.hierarchy().to_owned();
+            add_trailing_slash(&mut hier_name);
+            url = url.join(&hier_name)?;
+
             url = url.join("levels/")?;
 
             let mut lvl_name = members.level().to_owned();
