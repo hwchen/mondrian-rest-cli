@@ -39,7 +39,10 @@ use api::ResponseFormat;
         flag or several, the following are equivalent here:\n\n      \
         -o arg1 arg2 arg3\n      \
         -o arg1 -o arg2 -o arg3\n\n    \
-        This is especially useful when constructing queries
+        This is especially useful when constructing queriesi\n\n    \
+        However cuts within a Dimension must be specified using\n    \
+        one -c flag, with members comma-delimited:\n\n      \
+        \"Geography.State.State.1,2,3\"
         ",
 )]
 pub struct Config {
