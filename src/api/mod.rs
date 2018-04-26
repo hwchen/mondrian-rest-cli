@@ -131,19 +131,6 @@ impl QueryBuilder {
         self
     }
 
-    /// One finalizer for builder pattern
-    /// Execute the call and return
-    /// the body as unparsed string
-    pub fn exec(&self) -> Result<String, Error> {
-        let url = self.url()?;
-        let mut resp = reqwest::get(url)?;
-
-        // TODO return a good error
-    ensure!(resp.status().is_success(), format!("[{}]:\n{}", resp.status(), format_backtrace(resp.text()?)));
-
-        Ok(resp.text()?)
-    }
-
     /// The other finalizer
     /// return the url
     pub fn url(&self) -> Result<Url, Error> {
@@ -312,27 +299,8 @@ pub fn query(base_url: String) -> QueryBuilder {
     builder
 }
 
-/// Other other finalizer for builder pattern
-pub fn flush<S: Into<String>>(base_url: S, secret: S) -> Result<(), Error> {
-    let mut base_url = base_url.into().clone();
-    add_trailing_slash(&mut base_url);
-
-    let mut url = Url::parse(&base_url)?;
-    url = url.join("flush")?;
-
-    url.query_pairs_mut().append_pair("secret", &secret.into());
-    //println!("{}", url.as_str());
-
-    let mut resp = reqwest::get(url)?;
-
-    // TODO return a good error
-    ensure!(resp.status().is_success(), format!("[{}]:\n{}", resp.status(), format_backtrace(resp.text()?)));
-
-    Ok(())
-}
-
 // util fn
-fn add_trailing_slash(s: &mut String) {
+pub(crate) fn add_trailing_slash(s: &mut String) {
     if let Some(last_char) = s.chars().last() {
         if last_char != '/' {
             s.push('/');
@@ -340,7 +308,7 @@ fn add_trailing_slash(s: &mut String) {
     }
 }
 
-fn format_backtrace(s: String) -> String {
+pub(crate) fn format_backtrace(s: String) -> String {
     let try_de: Result<MonError, _> = serde_json::from_str(&s);
 
     // Need one more format for runtime errors that are caught.

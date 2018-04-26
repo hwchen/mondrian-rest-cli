@@ -25,9 +25,11 @@ mod api;
 mod config;
 mod schema;
 
-use config::Command;
 use failure::Error;
+use reqwest::{Client, Url};
+use std::time::Duration;
 
+use config::Command;
 use api::names::{Drilldown, Measure, Property, LevelName};
 use schema::{CubeDescription, CubeDescriptions};
 
@@ -41,6 +43,10 @@ fn main() {
 
 fn run() -> Result<(), Error> {
     let config = config::get_config()?;
+
+    let client = Client::builder()
+        .timeout(Duration::from_secs(config.timeout as u64))
+        .build()?;
 
     // TODO
     // Generate mondrianbuilder here
@@ -64,11 +70,12 @@ fn run() -> Result<(), Error> {
                 }
             }
 
+            let url = req.url()?;
             if config.verbose {
-                println!("{}", req.url().unwrap());
+                println!("{}", url);
             }
 
-            let resp = req.exec()?;
+            let resp = exec_query(&client, url)?;
 
             if raw {
                 resp
@@ -97,13 +104,15 @@ fn run() -> Result<(), Error> {
             if let Some(cube) = cube_name {
                 req.cube(cube.clone());
 
-                let cube_description: schema::CubeDescription = serde_json::from_str(&req.exec()?)?;
-                test_cube(&cube_description, &config.base_url.unwrap(), &cube, config.verbose)?
+                let url = req.url()?;
+                let cube_description: schema::CubeDescription = serde_json::from_str(&exec_query(&client, url)?)?;
+                test_cube(&client, &cube_description, &config.base_url.unwrap(), &cube, config.verbose)?
             } else {
-                // Do it again for all cubes
-                let cube_descriptions: schema::CubeDescriptions = serde_json::from_str(&req.exec()?)?;
+                // for all cubes
+                let url = req.url()?;
+                let cube_descriptions: schema::CubeDescriptions = serde_json::from_str(&exec_query(&client, url)?)?;
                 for cube_description in cube_descriptions.cubes {
-                    test_cube(&cube_description, config.base_url.as_ref().unwrap(), &cube_description.name, config.verbose)?
+                    test_cube(&client, &cube_description, config.base_url.as_ref().unwrap(), &cube_description.name, config.verbose)?
                 }
             }
             "\nTest Complete".to_owned()
@@ -112,7 +121,7 @@ fn run() -> Result<(), Error> {
             if config.verbose {
                 println!("secret: {}", secret.as_ref().unwrap());
             }
-            api::flush(config.base_url.unwrap(), secret.unwrap())?;
+            flush(&client, config.base_url.unwrap(), secret.unwrap())?;
             "Flush complete".to_owned()
         },
         Command::Query {
@@ -155,10 +164,11 @@ fn run() -> Result<(), Error> {
                 .sparse(sparse)
                 .format(format);
 
+            let url = req.url()?;
             if config.verbose {
-                println!("{}", req.url().unwrap());
+                println!("{}", url);
             }
-            req.exec()?
+            exec_query(&client, url)?
         },
     };
 
@@ -166,7 +176,14 @@ fn run() -> Result<(), Error> {
     Ok(())
 }
 
-fn test_cube(cube_description: &CubeDescription, base_url: &str, cube_name: &str, verbose: bool) -> Result<(), Error> {
+fn test_cube(client: &Client,
+    cube_description: &CubeDescription,
+    base_url: &str,
+    cube_name: &str,
+    verbose: bool,
+    ) -> Result<(), Error>
+{
+
     // Test strategy, to prevent all combinations being tested:
     // 2 runs
     // - all dims with one measure
@@ -195,10 +212,11 @@ fn test_cube(cube_description: &CubeDescription, base_url: &str, cube_name: &str
 
 
         if verbose {
-            println!("Test url:\n{}\n", req.url().unwrap());
+            println!("Test url:\n{}\n", req.url()?);
         }
 
-        req.exec().map(|_|())?;
+        let url = req.url()?;
+        client.get(url).send().map(|_|())?;
     }
 
     for property in properties {
@@ -209,12 +227,43 @@ fn test_cube(cube_description: &CubeDescription, base_url: &str, cube_name: &str
             .property(property);
 
         if verbose {
-            println!("Test url:\n{}\n", req.url().unwrap());
+            println!("Test url:\n{}\n", req.url()?);
         }
 
-        req.exec().map(|_|())?;
+        let url = req.url()?;
+        client.get(url).send().map(|_|())?;
     }
 
     println!("{}: passed", cube_name);
     Ok(())
 }
+
+/// Execute the call and return
+/// the body as unparsed string
+pub fn exec_query(client: &Client, url: Url) -> Result<String, Error> {
+    let mut resp = client.get(url).send()?;
+
+    // TODO return a good error
+    ensure!(resp.status().is_success(), format!("[{}]:\n{}", resp.status(), api::format_backtrace(resp.text()?)));
+
+    Ok(resp.text()?)
+}
+
+pub fn flush<S: Into<String>>(client: &Client, base_url: S, secret: S) -> Result<(), Error> {
+    let mut base_url = base_url.into().clone();
+    api::add_trailing_slash(&mut base_url);
+
+    let mut url = Url::parse(&base_url)?;
+    url = url.join("flush")?;
+
+    url.query_pairs_mut().append_pair("secret", &secret.into());
+    //println!("{}", url.as_str());
+
+    let mut resp = client.get(url).send()?;
+
+    // TODO return a good error
+    ensure!(resp.status().is_success(), format!("[{}]:\n{}", resp.status(), api::format_backtrace(resp.text()?)));
+
+    Ok(())
+}
+
