@@ -35,7 +35,7 @@ impl fmt::Display for CubeDescription {
         out.push_str("  Dimensions, Hierarchies, and Levels:\n");
         for dim in &self.dimensions {
             for (k, v) in &dim.annotations {
-                out.push_str(format!("    ({}: {})\n", k, v).as_str());
+                out.push_str(format!("    [{}]::({}: {})\n", dim.name, k, v).as_str());
             }
             for hier in &dim.hierarchies {
                 // no hierarchy annotations for now
